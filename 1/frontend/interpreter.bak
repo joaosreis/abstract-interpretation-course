@@ -1,0 +1,186 @@
+type ival = I of Z.t | B of bool
+
+type ival_err = T_correct of ival | T_error of string
+
+let create_error_message (s, e) =
+  let open Lexing in
+  if s.pos_lnum = e.pos_lnum then
+    Printf.sprintf "On line %d, characters %d-%d, %s" s.pos_lnum s.pos_cnum
+      e.pos_cnum
+  else
+    Printf.sprintf "On lines %d-%d, characters %d-%d, %s" s.pos_lnum
+      e.pos_lnum s.pos_cnum e.pos_cnum
+
+let create_ival_error pos msg = T_error (create_error_message pos msg)
+
+module Environment = Map.Make(struct
+    type t = string
+    let compare = compare
+  end)
+
+type env = ival Environment.t
+
+type env_err = E_correct of ival Environment.t | E_error of string
+
+let compare_env_err x y = match x, y with
+    Some (E_correct e_1), E_correct e_2 -> Environment.equal (=) e_1 e_2
+  | _ -> false
+
+let create_empty_env_err () = E_correct (Environment.empty)
+
+let create_env_error pos msg = E_error (create_error_message pos msg)
+
+type print_result = P_val of string | P_error of env_err
+
+let print_ids env ids =
+  let open Printf in
+  let rec print_ids_rec acc l = match acc with
+      P_error _ -> acc
+    | P_val s -> match l with
+        [] -> acc
+      | (id, id_pos) :: t ->
+        let fmt = format_of_string (match t with
+              [] -> "%s\"%s\": %s"
+            |  _ ->  "%s\"%s\": %s,") in         
+        try print_ids_rec (P_val (sprintf fmt s id (match Environment.find id env with
+              I i -> Z.to_string i
+            | B b -> string_of_bool b))) t
+        with Not_found ->
+          P_error (create_env_error id_pos ("undeclared variable '" ^ id ^ "'")) in
+  match print_ids_rec (P_val "") ids with
+    P_val s -> P_val (sprintf "{%s}" s)
+  | _ as r -> r
+
+let rec eval_u_op env (expr, pos) =
+  let open Abstract_syntax_tree in
+  match eval_expr env (expr, pos) with
+    T_error _ as e -> fun _ -> e
+  | T_correct v -> function
+      AST_UNARY_PLUS -> (match v with
+          I _ -> T_correct v
+        | B _ -> create_ival_error pos "expected int and got bool")
+    | AST_UNARY_MINUS -> (match v with
+          I i -> T_correct (I (Z.neg i))
+        | B _ -> create_ival_error pos "expected int and got bool")
+    | AST_NOT -> (match v with
+          B b -> T_correct (B (not b))
+        | I _ -> create_ival_error pos "expected bool and got int")
+
+and eval_b_op env (expr_1, pos_1) (expr_2, pos_2) =
+  let open Abstract_syntax_tree in
+  match eval_expr env (expr_1, pos_1), eval_expr env (expr_2, pos_2) with
+    T_error s, _ | _, T_error s -> fun _ -> T_error s
+  | T_correct v_1, T_correct v_2 ->
+    function
+      AST_PLUS -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (I (Z.add i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_MINUS -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (I (Z.sub i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_MULTIPLY -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (I (Z.mul i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_DIVIDE -> (match v_1, v_2 with
+          I _, I i2 when i2 = Z.zero -> create_ival_error pos_2 "division by zero"
+        | I i1, I i2 -> T_correct (I (Z.div i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_MODULO -> (match v_1, v_2 with
+          I _, I i2 when i2 = Z.zero -> create_ival_error pos_2 "modulo by zero"
+        | I i1, I i2 -> T_correct (I (Z.(mod) i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    (* polymorphic comparison, should work for int and bool *)
+    | AST_EQUAL -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (B (Z.equal i1 i2))
+        | B b1, B b2 -> T_correct (B (b1 = b2))
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool"
+        | B _, I _ -> create_ival_error pos_2 "expected bool and got int")
+    | AST_NOT_EQUAL -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (B (not (Z.equal i1 i2)))
+        | B b1, B b2 -> T_correct (B (not (b1 = b2)))
+        | I _, B _ -> create_ival_error pos_2 "expected int and got bool"
+        | B _, I _ -> create_ival_error pos_2 "expected bool and got int")
+    | AST_LESS -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (B (Z.lt i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_LESS_EQUAL -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (B (Z.leq i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_GREATER -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (B (Z.gt i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_GREATER_EQUAL -> (match v_1, v_2 with
+          I i1, I i2 -> T_correct (B (Z.geq i1 i2))
+        | B _, _ -> create_ival_error pos_1 "expected int and got bool"
+        | _, B _ -> create_ival_error pos_2 "expected int and got bool")
+    | AST_AND -> (match v_1, v_2 with
+          B b1, B b2 -> T_correct (B (b1 && b2))
+        | I _, _ -> create_ival_error pos_1 "expected bool and got int"
+        | _, I _ -> create_ival_error pos_2 "expected bool and got int")
+    | AST_OR -> (match v_1, v_2 with
+          B b1, B b2 -> T_correct (B (b1 || b2))
+        | I _, _ -> create_ival_error pos_1 "expected bool and got int"
+        | _, I _ -> create_ival_error pos_2 "expected bool and got int")
+
+and eval_expr env (expr, _) =
+  let open Abstract_syntax_tree in
+  match expr with
+    AST_unary (u_op, expr') -> eval_u_op env expr' u_op
+  | AST_binary (b_op, expr', expr'') -> eval_b_op env expr' expr'' b_op
+  (* variable use *)
+  | AST_variable (id, pos) ->
+    (try T_correct (Environment.find id env)
+     with Not_found -> create_ival_error pos "undefined variable")
+  (* constants (integers are still in their string representation) *)
+  | AST_int_const (i, _) -> T_correct (I i)
+  | AST_bool_const b -> T_correct (B b)
+  (* non-deterministic choice between two integeres *)
+  | AST_int_rand _ -> assert false
+
+let rec eval_stat env_err (stmt, pos) =
+  match env_err with
+    E_error _ -> env_err
+  | E_correct env ->
+    let open Abstract_syntax_tree in
+    match stmt with
+      AST_block stmts -> List.fold_left eval_stat env_err stmts
+    | AST_assign ((lv, _), (rv, rv_pos)) ->
+      (match eval_expr env (rv, rv_pos) with
+         T_correct v -> E_correct (Environment.add lv v env)
+       | T_error e -> E_error e)
+    | AST_if ((cond, cond_pos), t, e) ->
+      (match eval_expr env (cond, cond_pos), e with
+         T_correct (B b), _ when b -> eval_stat env_err t
+       | T_correct (B b), Some es when not b -> eval_stat env_err es
+       | T_correct (B _), None -> env_err
+       | T_correct _, _ -> create_env_error cond_pos "expected bool and got int"
+       | T_error s, _ -> E_error s)
+    | AST_while ((cond, cond_pos), body) ->
+      (match eval_expr env (cond, cond_pos) with
+         T_correct (B b) -> if b then
+           let (_, res) = List.fold_left (fun (prev, act) s ->
+               if (compare_env_err prev act) then (prev, create_env_error pos "loop detected")
+               else (Some act, eval_stat act s)) (None, env_err) ([body;(stmt, pos)]) in
+           res
+         else env_err
+       | T_correct _ -> create_env_error cond_pos "expected bool and got int"
+       | T_error s -> E_error s)
+    | AST_HALT -> create_env_error pos "program halted"
+    (* assertion: fail if the boolean expression does not hold *)
+    | AST_assert (cond, cond_pos) -> (match eval_expr env (cond, cond_pos) with
+          T_correct (B b) -> if b then env_err
+          else create_env_error pos "assert failed"
+        | T_correct _ -> create_env_error cond_pos "expected bool and got int"
+        | T_error s -> E_error s)
+    (* prints the value of some variables *)
+    | AST_print ids -> match print_ids env ids with
+        P_val s -> let () = print_endline s in env_err
+      | P_error s -> s

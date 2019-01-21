@@ -1,0 +1,33 @@
+{
+  "kind": "folder",
+  "name": "examples",
+  "deterministic": false,
+  "content": [
+    {
+      "kind": "file",
+      "name": "gcd_nd.c",
+      "terminate": true,
+      "stdout": [
+        [
+          {"a": 1, "b": 0},
+          {"a": 2, "b": 0},
+          {"a": 3, "b": 0},
+          {"a": 4, "b": 0},
+          {"a": 5, "b": 0},
+          {"a": 6, "b": 0},
+          {"a": 7, "b": 0},
+          {"a": 8, "b": 0}
+        ]
+      ],
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "loop4.c",
+      "terminate": false,
+      "timeout": 0.25,
+      "fatal": true
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+open Abstract_syntax_tree
+
+type ival = I of Z.t | B of bool
+
+type ival_err = T_correct of ival | T_error of string
+
+module Environment : Map.S
+
+type env = ival Environment.t
+
+type env_err = E_correct of ival Environment.t | E_error of string
+
+val create_empty_env_err : unit -> env_err
+
+val eval_expr: env -> expr ext -> ival_err
+
+val eval_stat: env_err -> stat ext -> env_err

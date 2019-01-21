@@ -1,0 +1,57 @@
+{
+  "kind": "folder",
+  "name": ".",
+  "deterministic": true,
+  "content": [
+    {
+      "kind": "file",
+      "name": "detailed_gcd.c",
+      "terminate": true,
+      "stdout": [
+        {"a": -26134272, "b": 26396928},
+        {"a": 26134272, "b": 26396928},
+        {"a": 26134272, "b": 26396928},
+        {"a": 26134272, "b": 26396928},
+        {"a": 26396928, "b": 26134272},
+        {"a": 26134272, "b": 262656},
+        {"a": 262656, "b": 131328},
+        {"a": 131328}
+      ],
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "gcd.c",
+      "terminate": true,
+      "stdout": [
+        {"a": 131328}
+      ],
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "loop.c",
+      "terminate": true,
+      "stdout": [],
+      "exit": 0,
+      "fatal": false
+    },
+    {
+      "kind": "file",
+      "name": "loop2.c",
+      "terminate": false,
+      "timeout": 0.25,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "loop3.c",
+      "terminate": true,
+      "stdout": [],
+      "exit": 1,
+      "fatal": true
+    }
+  ]
+}

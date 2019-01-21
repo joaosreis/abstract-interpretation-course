@@ -7,6 +7,12 @@
 *.cmx
 *.cmxs
 *.cmxa
+._d
+._bcdi
+parser.ml
+parser.mli
+lexer.ml
+lexer.mli
 
 # ocamlbuild working directory
 _build/
@@ -18,3 +24,9 @@ _build/
 # oasis generated files
 setup.data
 setup.log
+
+# local opam
+_opam
+
+# VSCode
+.vscode

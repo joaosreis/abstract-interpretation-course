@@ -1,0 +1,26 @@
+{
+  "kind": "folder",
+  "name": ".",
+  "content": [
+    {
+      "kind": "folder",
+      "name": "examples",
+      "content": [
+        {
+          "kind": "suite",
+          "name": "examples.json"
+        }
+      ]
+    },
+    {
+      "kind": "folder",
+      "name": "tests",
+      "content": [
+        {
+          "kind": "suite",
+          "name": "tests.json"
+        }
+      ]
+    }
+  ]
+}

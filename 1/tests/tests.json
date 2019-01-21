@@ -1,0 +1,28 @@
+{
+  "kind": "folder",
+  "name": ".",
+  "content": [
+    {
+      "kind": "folder",
+      "name": "deterministic_tests",
+      "deterministic": true,
+      "content": [
+        {
+          "kind": "suite",
+          "name": "deterministic_tests.json"
+        }
+      ]
+    },
+    {
+      "kind": "folder",
+      "name": "non_deterministic_tests",
+      "deterministic": false,
+      "content": [
+        {
+          "kind": "suite",
+          "name": "non_deterministic_tests.json"
+        }
+      ]
+    }
+  ]
+}

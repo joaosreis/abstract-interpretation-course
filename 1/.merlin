@@ -1,0 +1,9 @@
+PKG zarith
+PKG menhirLib
+S .
+B .
+S frontend
+B frontend
+S libs
+B libs
+FLG -w "+a-4-9"

@@ -1,0 +1,149 @@
+{
+  "kind": "folder",
+  "name": ".",
+  "deterministic": true,
+  "content": [
+    {
+      "kind": "file",
+      "name": "add.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "and.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "assert_false.c",
+      "terminate": true,
+      "exit": 1,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "assert_true.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "div.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "div_zero.c",
+      "terminate": true,
+      "exit": 1,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "halt.c",
+      "terminate": true,
+      "exit": 1,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "if.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "mod.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "mod_zero.c",
+      "terminate": true,
+      "exit": 1,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "mult.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "not.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "or.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "print_bool.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true,
+      "stdout": [{ "a": true, "b": false }]
+    },
+    {
+      "kind": "file",
+      "name": "print_int.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true,
+      "stdout": [{ "a": 42, "b": 21 }]
+    },
+    {
+      "kind": "file",
+      "name": "or.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "sub.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "var_int.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "var_bool.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    },
+    {
+      "kind": "file",
+      "name": "while.c",
+      "terminate": true,
+      "exit": 0,
+      "fatal": true
+    }
+  ]
+}

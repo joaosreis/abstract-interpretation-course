@@ -1,0 +1,16 @@
+{
+  "kind": "folder",
+  "name": ".",
+  "content": [
+    {
+      "kind": "suite",
+      "name": "deterministic_examples.json",
+      "deterministic": true
+    },
+    {
+      "kind": "suite",
+      "name": "non_deterministic_examples.json",
+      "deterministic": false
+    }
+  ]
+}
