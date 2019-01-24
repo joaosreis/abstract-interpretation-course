@@ -16,6 +16,8 @@ SOURCES = \
 	frontend/parser.mly frontend/lexer.mll \
 	frontend/parser_messages.ml \
 	frontend/file_parser.ml frontend/file_parser.mli \
+	frontend/domain.ml \
+	frontend/iterator.ml \
 	main.ml
 
 PACKS = zarith menhirLib

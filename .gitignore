@@ -9,6 +9,7 @@
 *.cmxa
 ._d
 ._bcdi
+parser.conflicts
 parser.ml
 parser.mli
 lexer.ml
