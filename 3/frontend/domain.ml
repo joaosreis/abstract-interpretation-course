@@ -194,11 +194,9 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
 
   let init = List.fold_left (fun acc x -> Map.add x V.bottom acc) Map.empty
 
-  let assign env id e = 
-
-    let compare a b = match a, b with
-        Bot, _ -> -1 | _, Bot -> 1
-      | Env m, Env n -> Map.fold2 (fun _ x y acc -> if acc <> 0 then acc else compare x y) m n 0
+  let compare a b = match a, b with
+      Bot, _ -> -1 | _, Bot -> 1
+    | Env m, Env n -> Map.fold2 (fun _ x y acc -> if acc <> 0 then acc else compare x y) m n 0
 
   (* utilities *)
   let rec eval env = function
@@ -214,8 +212,15 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
        | AST_MINUS -> V.sub eval_e1 eval_e2
        | AST_MULTIPLY -> V.mul eval_e1 eval_e2
        | AST_DIVIDE -> V.div eval_e1 eval_e2
-       | _ -> failwith "unsupported operation")
-    | _ -> failwith "unsupported construct"
+       | _ -> V.bottom)
+    | _ -> V.bottom
+
+  let assign env id e =
+    let eval_e = eval env e in
+    if eval_e = V.bottom then
+      Bot
+    else
+      Env (Map.add id eval_e env)
 
   let is_bot = Map.is_empty
 
@@ -239,5 +244,4 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
   let subset a b = match a, b with
       Bot, _ -> true | _, Bot -> false
     | Env m, Env n -> Map.for_all2z (fun _ x y -> V.subset x y) m n
-
-end : ENVIRONMENT_DOMAIN)
+end(* : ENVIRONMENT_DOMAIN*))
