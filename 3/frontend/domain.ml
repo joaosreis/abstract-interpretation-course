@@ -192,11 +192,8 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
 
   type t = Env of env | Bot
 
-  let init = List.fold_left (fun acc x -> Map.add x V.bottom acc) Map.empty
-
-  let compare a b = match a, b with
-      Bot, _ -> -1 | _, Bot -> 1
-    | Env m, Env n -> Map.fold2 (fun _ x y acc -> if acc <> 0 then acc else compare x y) m n 0
+  let init l =
+    Env (List.fold_left (fun acc x -> Map.add x V.bottom acc) Map.empty l)
 
   (* utilities *)
   let rec eval env = function
@@ -215,18 +212,43 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
        | _ -> V.bottom)
     | _ -> V.bottom
 
-  let assign env id e =
-    let eval_e = eval env e in
-    if eval_e = V.bottom then
-      Bot
-    else
-      Env (Map.add id eval_e env)
-
-  let is_bot = Map.is_empty
-
   let strict f = function
       Bot -> Bot
     | Env env -> f env
+
+  (*let refine expr r =
+    let root = V.cost*)
+
+  let compare env a b = strict (fun env ->
+      let open Abstract_syntax_tree in
+      let new_expr =
+        AST_binary (AST_MINUS, (a, extent_unknown), (b, extent_unknown)) in
+      let eval_expr = eval env new_expr in
+      match a, b with
+        AST_variable (v, _), AST_variable (w, _) ->
+        let eval_a = eval env a in
+        let eval_b = eval env b in
+        let x, y = V.leq eval_a eval_b in
+        Env (Map.add w.var_name y (Map.add v.var_name x env))
+      | AST_variable (v, _), AST_int_const c ->
+        let eval_a = eval env a in
+        let x = V.cost c in
+        let (y, _) = V.leq eval_a x in
+        Env (Map.add v.var_name y env)
+    ) env
+
+
+  let assign env id e =
+    match env with
+      Bot -> Bot
+    | Env env ->
+      let eval_e = eval env e in
+      if eval_e = V.bottom then
+        Bot
+      else
+        Env (Map.add id eval_e env)
+
+  let is_bot = Map.is_empty
 
   (* operators *)
   let join a b = match a, b with
