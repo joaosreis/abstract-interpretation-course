@@ -161,7 +161,6 @@ module Interval = (struct
     | P_infinity, _ | _, P_infinity -> P_infinity
     | Int x, Int y -> Int (Z.max x y)
 
-
   let binary x y op = match x, y with
       Bot, _ | _, Bot -> Bot
     | Itv (a, b), Itv (c, d) -> match op with
@@ -223,24 +222,36 @@ module Interval = (struct
         meet y (join (binary x s AST_DIVIDE) (const Z.zero))
       | AST_MODULO -> assert false (* TODO: complete *)
 
-  let root_refine r x = function
-      AST_GREATER_EQUAL -> meet r (Itv (N_infinity, x))
-    | AST_GREATER -> meet r (Itv (N_infinity, bound_sub x (Int Z.one)))
-    | AST_LESS_EQUAL -> meet r (Itv (x, P_infinity))
-    | AST_LESS -> meet r (Itv (bound_add x (Int Z.one), P_infinity))
+  let root_refine r x =
+    let v_x = Int x in
+    function
+      AST_GREATER_EQUAL -> meet r (Itv (N_infinity, v_x))
+    | AST_GREATER -> meet r (Itv (N_infinity, bound_sub v_x (Int Z.one)))
+    | AST_LESS_EQUAL -> meet r (Itv (v_x, P_infinity))
+    | AST_LESS -> meet r (Itv (bound_add v_x (Int Z.one), P_infinity))
+    | AST_EQUAL -> meet r (const x)
+    | AST_NOT_EQUAL -> r (* FIXME: is it correct? *)
 
-  let compare a b op =
-    let new_expr =
-      AST_binary (AST_MINUS, (a, extent_unknown), (b, extent_unknown)) in
-    let eval_expr = eval env new_expr in
-    match op with
-      AST_EQUAL -> 
+  (* val compare: t -> t -> compare_op -> (t * t) *)
+  let rec compare x y op =
+    match op, x, y with
+      AST_GREATER_EQUAL, Itv (a, b), Itv (c, d) ->
+      if bound_cmp a d <= 0 then
+        Itv (a, bound_min b d), Itv (bound_max a c, d)
+      else Bot, Bot
+    | AST_LESS_EQUAL, Itv _, Itv _ ->
+      compare x y AST_GREATER_EQUAL
+    | AST_GREATER, Itv (a, b), Itv (c, d) ->
+      if bound_cmp a d <= 0 then
+        Itv (a, bound_min b d), Itv (bound_max a c, d)
+      else Bot, Bot
 
-      (* utilities *)
 
-      let strict f = function
-          Bot -> Bot
-        | Itv (x, y) -> f x y
+  (* utilities *)
+
+  let strict f = function
+      Bot -> Bot
+    | Itv (x, y) -> f x y
 
   (* domain implementation *)
 
