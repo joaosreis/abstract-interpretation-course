@@ -93,7 +93,6 @@ module Interval = (struct
 
   type t = Bot | Itv of bound * bound
 
-  (* constructors *)
   let top = Itv (N_infinity, P_infinity)
 
   let bottom = Bot
@@ -152,16 +151,20 @@ module Interval = (struct
     | Int x, Int y -> Z.compare x y
 
   (* Infix operators *)
-  let (+.) = bound_add
-  let (-.) = bound_sub
-  let ( *.) = bound_mul
-  let (/.) = bound_div
-  let (=.) a b = bound_cmp a b = 0
-  let (<>.) a b = bound_cmp a b <> 0
-  let (<.) a b = bound_cmp a b < 0
-  let (<=.) a b = bound_cmp a b <= 0
-  let (>.) a b = bound_cmp a b > 0
-  let (>=.) a b = bound_cmp a b >= 0
+  module Infix = struct
+    let (+&) = bound_add
+    let (-&) = bound_sub
+    let ( *&) = bound_mul
+    let (/&) = bound_div
+    (*let (=&) a b = bound_cmp a b = 0
+      let (<>&) a b = bound_cmp a b <> 0*)
+    let (<&) a b = bound_cmp a b < 0
+    let (<=&) a b = bound_cmp a b <= 0
+    (* let (>&) a b = bound_cmp a b > 0 *)
+    let (>=&) a b = bound_cmp a b >= 0
+  end
+
+  open Infix
 
   let bound_min a b = match a, b with
       N_infinity, _ | _, N_infinity -> N_infinity
@@ -176,23 +179,23 @@ module Interval = (struct
   let binary x y op = match x, y with
       Bot, _ | _, Bot -> Bot
     | Itv (a, b), Itv (c, d) -> match op with
-        AST_PLUS -> Itv (a +. c, b +. d)
-      | AST_MINUS -> Itv (a -. d, b -. c)
+        AST_PLUS -> Itv (a +& c, b +& d)
+      | AST_MINUS -> Itv (a -& d, b -& c)
       | AST_MULTIPLY ->
-        let r1 = a *. c in
-        let r2 = a *. d in
-        let r3 = b *. c in
-        let r4 = b *. d in
+        let r1 = a *& c in
+        let r2 = a *& d in
+        let r3 = b *& c in
+        let r4 = b *& d in
         Itv (bound_min r1 (bound_min r2 (bound_min r3 r4)), bound_max r1 (bound_max r2 (bound_max r3 r4)))
       | AST_DIVIDE ->
-        let ac = a /. c in
-        let ad = a /. d in
-        let bc = b /. c in
-        let bd = b /. d in
-        if c >=. (Int Z.one) then
-          Itv (min ac ad, max bc bd)
-        else if d <=. (Int (Z.neg Z.one)) then
-          Itv (min bc bd, max ac ad)
+        let ac = a /& c in
+        let ad = a /& d in
+        let bc = b /& c in
+        let bd = b /& d in
+        if c >=& (Int Z.one) then
+          Itv (bound_min ac ad, bound_max bc bd)
+        else if d <=& (Int (Z.neg Z.one)) then
+          Itv (bound_min bc bd, bound_max ac ad)
         else
           Bot
       | AST_MODULO -> assert false (* TODO: complete *)
@@ -211,7 +214,7 @@ module Interval = (struct
   let bwd_unary x op r =
     match x, r with
       Bot, _ | _, Bot -> Bot
-    | Itv (a, b), Itv (r, s) -> match op with
+    | Itv _, Itv (r, s) -> match op with
         AST_UNARY_PLUS -> x
       | AST_UNARY_MINUS -> meet x (Itv (bound_neg s, bound_neg r))
 
@@ -234,31 +237,31 @@ module Interval = (struct
         meet y (join (binary x s AST_DIVIDE) (const Z.zero))
       | AST_MODULO -> assert false (* TODO: complete *)
 
-  let root_refine r x =
+  (*let root_refine r x =
     let v_x = Int x in
     function
       AST_GREATER_EQUAL -> meet r (Itv (N_infinity, v_x))
-    | AST_GREATER -> meet r (Itv (N_infinity, v_x -. (Int Z.one)))
+    | AST_GREATER -> meet r (Itv (N_infinity, v_x -& (Int Z.one)))
     | AST_LESS_EQUAL -> meet r (Itv (v_x, P_infinity))
-    | AST_LESS -> meet r (Itv (v_x +. (Int Z.one), P_infinity))
+    | AST_LESS -> meet r (Itv (v_x +& (Int Z.one), P_infinity))
     | AST_EQUAL -> meet r (const x)
-    | AST_NOT_EQUAL -> r (* FIXME: is it correct? *)
+    | AST_NOT_EQUAL -> r (* FIXME: is it correct? *)*)
 
   (* val compare: t -> t -> compare_op -> (t * t) *)
   let rec compare x y op =
     match op, x, y with
       AST_GREATER_EQUAL, Itv (a, b), Itv (c, d) ->
-      if a <=. d then
+      if a <=& d then
         Itv (a, bound_min b d), Itv (bound_max a c, d)
       else Bot, Bot
     | AST_LESS_EQUAL, Itv _, Itv _ ->
       compare y x AST_GREATER_EQUAL
     | AST_GREATER, Itv (a, b), Itv (c, d) -> (* FIXME: not sure if it is correct *)
-      if a <. d then
+      if a <& d then
         let min_bd = bound_min b d in
         let max_ac = bound_max a c in
-        let l = if min_bd = d then min_bd -. (Int Z.one) else min_bd in
-        let r = if max_ac = a then max_ac +. (Int Z.one) else max_ac in
+        let l = if min_bd = d then min_bd -& (Int Z.one) else min_bd in
+        let r = if max_ac = a then max_ac +& (Int Z.one) else max_ac in
         Itv (a, l), Itv (r, d)
       else Bot, Bot
     | AST_LESS, Itv _, Itv _ ->
@@ -268,40 +271,30 @@ module Interval = (struct
     | AST_NOT_EQUAL, _, _ (* FIXME: probably not correct *)
     | _, Bot, _ | _, _ , Bot -> Bot, Bot
 
-  (* utilities *)
-
-  let strict f = function
+  (*let strict f = function
       Bot -> Bot
-    | Itv (x, y) -> f x y
+    | Itv (x, y) -> f x y*)
 
-  (* domain implementation *)
-
-  (* order *)
   let subset a b = match a, b with
       Bot, _-> true | _, Bot -> false
     | Itv (a, b), Itv (c, d) ->
-      a >=. c && b >=. d
+      a >=& c && b >=& d
 
   let widen a b = match a, b with
       x, Bot | Bot, x -> x
     | Itv (a, b), Itv (c, d) ->
       let x =
-        if a <=. c then a
+        if a <=& c then a
         else N_infinity in
       let y =
-        if b >=. d then b
+        if b >=& d then b
         else P_infinity in
       Itv (x, y)
 
-  (* arithmetic operations *)
-  let neg = strict
-      (fun a b -> Itv (bound_neg a, bound_neg b))
-
-  (* boolean test *)
-  let leq a b = match a, b with
+  (*let leq a b = match a, b with
       Bot, _ | _, Bot -> Bot, Bot
     | Itv (a, b), Itv (c, d) ->
-      Itv (a, bound_min b d), Itv (bound_max a c, d)
+      Itv (a, bound_min b d), Itv (bound_max a c, d)*)
 
   let is_bottom = function Bot -> true | _ -> false
 

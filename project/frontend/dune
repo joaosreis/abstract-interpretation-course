@@ -1,0 +1,18 @@
+(library
+ (name frontend)
+ (libraries libs zarith menhirLib)
+ (wrapped false))
+
+(menhir
+ (flags --explain --table)
+ (modules parser))
+
+(rule
+ (targets parser_messages.ml)
+ (deps parser.mly parser.messages)
+ (action (chdir %{workspace_root}
+            (with-stdout-to frontend/parser_messages.ml
+             (run menhir frontend/parser.mly --compile-errors
+              frontend/parser.messages)))))
+
+(ocamllex lexer)

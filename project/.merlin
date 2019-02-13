@@ -1,5 +1,0 @@
-PKG zarith
-PKG menhirLib
-S **
-B **
-FLG -w "+a-4-9"

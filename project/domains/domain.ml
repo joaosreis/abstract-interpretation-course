@@ -14,40 +14,43 @@
 open! Cfg
 
 module type DOMAIN =
-  sig
+sig
 
-    (* type of abstract elements *)
-    (* an element of type t abstracts a set of mappings from variables
-       to integers
-     *)
-    type t
+  (* type of abstract elements *)
+  (* an element of type t abstracts a set of mappings from variables
+     to integers
+  *)
+  type t
 
-    (* initial environment, with all variables initialized to 0 *)
-    val init: var list -> t
+  (* initial environment, with all variables initialized to 0 *)
+  val init: var list -> t
 
-    (* empty set of environments *)
-    val bottom: t
+  (* empty set of environments *)
+  val bottom: t
 
-    (* assign an integer expression to a variable *)
-    val assign: t -> var -> int_expr -> t
+  (* assign an integer expression to a variable *)
+  val assign: t -> var -> int_expr -> t
 
-    (* filter environments to keep only those satisfying the boolean expression *)
-    val guard: t -> bool_expr -> t
+  (* filter environments to keep only those satisfying the boolean expression *)
+  val guard: t -> bool_expr -> t
 
-    (* abstract join *)
-    val join: t -> t -> t
+  (* abstract join *)
+  val join: t -> t -> t
 
-    (* widening *)
-    val widen: t -> t -> t
+  (* widening *)
+  val widen: t -> t -> t
 
-    (* whether an abstract element is included in another one *)
-    val subset: t -> t -> bool
+  (* whether an abstract element is included in another one *)
+  val subset: t -> t -> bool
 
-    (* whether the abstract element represents the empty set *)
-    val is_bottom: t -> bool
+  (* whether the abstract element represents the empty set *)
+  val is_bottom: t -> bool
 
-    (* prints *)
-    val print: out_channel -> t -> unit
+  (* prints *)
+  val print: out_channel -> t -> unit
 
-  end
+end
 
+module NonRelational(V : Value_domain.VALUE_DOMAIN) = struct
+
+end
