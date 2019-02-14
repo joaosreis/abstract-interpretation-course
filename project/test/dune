@@ -1,0 +1,10 @@
+(test
+ (name test)
+ (libraries test_lib domains frontend)
+ (modules test))
+
+(library
+ (name test_lib)
+ (libraries domains)
+ (modules my_domain)
+ (wrapped false))

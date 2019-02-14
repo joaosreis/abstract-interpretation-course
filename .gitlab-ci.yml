@@ -1,0 +1,11 @@
+project:
+  stage: build
+  image: ocaml/opam2:4.07
+  script:
+    - cd project
+    - opam install dune
+    - echo $(dune external-lib-deps --missing main.exe 2>&1 | grep opam) | sed -E 's/.*opam install (.*)/\1/' | sed 's/menhirLib/menhir/' > deps
+    - cat deps | xargs opam depext
+    - cat deps | xargs opam install
+    - dune build main.exe
+    - dune runtest

@@ -1,4 +1,6 @@
 (library
  (name domains)
  (libraries frontend zarith)
- (wrapped false))
+ (wrapped false)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test)))

@@ -109,7 +109,10 @@ module Interval = (struct
   let unary itv op = match itv, op with
       Bot, _ -> Bot
     | _, AST_UNARY_PLUS -> itv
-    | Itv (x, y), AST_UNARY_MINUS -> Itv (bound_neg x, bound_neg y)
+    | Itv (x, y), AST_UNARY_MINUS -> Itv (bound_neg y, bound_neg x)
+
+  let%test _ = unary (Itv (Int Z.minus_one, P_infinity)) AST_UNARY_MINUS =
+               Itv (N_infinity, Int Z.one)
 
   type sign = Neg | Pos
 
@@ -128,7 +131,7 @@ module Interval = (struct
   let bound_sub a b = match a, b with
       P_infinity, _ | _, N_infinity -> P_infinity
     | N_infinity, _ | _, P_infinity -> N_infinity
-    | Int x, Int y -> Int (Z.add x y)
+    | Int x, Int y -> Int (Z.sub x y)
 
   let bound_mul a b = match a, b, sign a, sign b with
       P_infinity, _, _, Neg | _, P_infinity, Neg, _ -> N_infinity
@@ -200,6 +203,31 @@ module Interval = (struct
           Bot
       | AST_MODULO -> assert false (* TODO: complete *)
 
+  let%test _ =
+    binary (Itv (Int Z.zero, Int (Z.of_int 10)))
+      (Itv (Int (Z.of_int 2), Int (Z.of_int 10))) AST_PLUS =
+    Itv (Int (Z.of_int 2), Int (Z.of_int 20))
+
+  let%test _ =
+    binary (Itv (Int (Z.of_int 2), Int (Z.of_int 20)))
+      (Itv (Int (Z.of_int 3), Int (Z.of_int 5))) AST_MINUS =
+    Itv (Int (Z.of_int (-3)), Int (Z.of_int 17))
+
+  let%test _ =
+    binary (Itv (Int (Z.of_int 3), Int (Z.of_int 20)))
+      (Itv (Int (Z.of_int (-2)), Int (Z.of_int 0))) AST_MULTIPLY =
+    Itv (Int (Z.of_int (-40)), Int (Z.of_int 0))
+
+  let%test _ =
+    binary (Itv (Int (Z.of_int 5), Int (Z.of_int 6)))
+      (Itv (Int (Z.of_int 2), Int (Z.of_int 3))) AST_DIVIDE =
+    Itv (Int (Z.of_int 1), Int (Z.of_int 3))
+
+  let%test _ =
+    binary (Itv (Int (Z.of_int 5), Int (Z.of_int 6)))
+      (Itv (Int (Z.of_int (-2)), Int (Z.of_int (-1)))) AST_DIVIDE =
+    Itv (Int (Z.of_int (-6)), Int (Z.of_int (-2)))
+
   let join x y = match x, y with
       Bot, l | l, Bot -> l
     | Itv (a, b), Itv (c, d) -> Itv (bound_min a c, bound_max b d)
@@ -210,6 +238,16 @@ module Interval = (struct
       if bound_max a c <= bound_min b d then Itv (bound_max a c, bound_min b d)
       else
         Bot
+
+  let%test _ =
+    meet (Itv (Int (Z.of_int (-2)), Int (Z.of_int 6)))
+      (Itv (Int (Z.of_int 0), Int (Z.of_int 20))) =
+    Itv (Int (Z.of_int 0), Int (Z.of_int 6))
+
+  let%test _ =
+    join (Itv (Int (Z.of_int (-2)), Int (Z.of_int 6)))
+      (Itv (Int (Z.of_int 0), Int (Z.of_int 20))) =
+    Itv (Int (Z.of_int (-2)), Int (Z.of_int 20))
 
   let bwd_unary x op r =
     match x, r with
@@ -237,17 +275,6 @@ module Interval = (struct
         meet y (join (binary x s AST_DIVIDE) (const Z.zero))
       | AST_MODULO -> assert false (* TODO: complete *)
 
-  (*let root_refine r x =
-    let v_x = Int x in
-    function
-      AST_GREATER_EQUAL -> meet r (Itv (N_infinity, v_x))
-    | AST_GREATER -> meet r (Itv (N_infinity, v_x -& (Int Z.one)))
-    | AST_LESS_EQUAL -> meet r (Itv (v_x, P_infinity))
-    | AST_LESS -> meet r (Itv (v_x +& (Int Z.one), P_infinity))
-    | AST_EQUAL -> meet r (const x)
-    | AST_NOT_EQUAL -> r (* FIXME: is it correct? *)*)
-
-  (* val compare: t -> t -> compare_op -> (t * t) *)
   let rec compare x y op =
     match op, x, y with
       AST_GREATER_EQUAL, Itv (a, b), Itv (c, d) ->
@@ -271,10 +298,6 @@ module Interval = (struct
     | AST_NOT_EQUAL, _, _ (* FIXME: probably not correct *)
     | _, Bot, _ | _, _ , Bot -> Bot, Bot
 
-  (*let strict f = function
-      Bot -> Bot
-    | Itv (x, y) -> f x y*)
-
   let subset a b = match a, b with
       Bot, _-> true | _, Bot -> false
     | Itv (a, b), Itv (c, d) ->
@@ -290,11 +313,6 @@ module Interval = (struct
         if b >=& d then b
         else P_infinity in
       Itv (x, y)
-
-  (*let leq a b = match a, b with
-      Bot, _ | _, Bot -> Bot, Bot
-    | Itv (a, b), Itv (c, d) ->
-      Itv (a, bound_min b d), Itv (bound_max a c, d)*)
 
   let is_bottom = function Bot -> true | _ -> false
 
