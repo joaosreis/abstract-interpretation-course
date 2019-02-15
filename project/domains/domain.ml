@@ -85,12 +85,14 @@ module NonRelational(V : Value_domain.VALUE_DOMAIN) = (struct
       V.binary eval_e1 eval_e2 op
 
   let assign t var expr =
-    strict (fun env ->
-        let eval_expr = eval_int env expr in
-        if V.is_bottom eval_expr then
-          Bot
-        else
-          Env (Map.add var.var_name eval_expr env)) t
+    let env = match t with
+        Bot -> Map.empty
+      | Env env -> env in
+    let eval_expr = eval_int env expr in
+    if V.is_bottom eval_expr then
+      Bot
+    else
+      Env (Map.add var.var_name eval_expr env)
 
   let rec preprocess = function
       CFG_bool_unary (AST_NOT, c) -> (match c with

@@ -26,8 +26,7 @@ let z = {
 
 let d =
   let assign v e t = D.assign t v e in
-  D.init [x; y; z] |>
-  assign x (CFG_int_rand (Z.zero, Z.of_int 10)) |>
+  assign x (CFG_int_rand (Z.zero, Z.of_int 10)) D.bottom |>
   assign y (CFG_int_rand (Z.of_int 2, Z.of_int 10)) |>
   assign z (CFG_int_rand (Z.of_int 3, Z.of_int 5))
 
