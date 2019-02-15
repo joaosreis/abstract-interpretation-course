@@ -1,1 +1,1 @@
-include Domain.NonRelational(Value_domain.Interval)
+include Domain.NonRelational(Interval)

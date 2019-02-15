@@ -75,30 +75,18 @@ module NonRelational(V : Value_domain.VALUE_DOMAIN) = (struct
 
   let rec eval_int env =
     function
-      AST_int_identifier (v, _) -> Map.find v env
-    | AST_int_const (x, _) -> V.const (Z.of_string x)
-    | AST_int_rand ((a, _), (b, _)) -> V.rand (Z.of_string a) (Z.of_string b)
-    | AST_int_unary (op, (e, _)) -> V.unary (eval_int env e) op
-    | AST_int_binary (op, (e_1, _), (e_2, _)) ->
-      let eval_e1 = eval_int env e_1 in
-      let eval_e2 = eval_int env e_2 in
-      V.binary eval_e1 eval_e2 op
-    | AST_expr_call ((_, _), _) -> assert false (* TODO: complete *)
-
-  let rec eval_int_cfg env =
-    function
       CFG_int_var v -> Map.find v.var_name env
     | CFG_int_const x -> V.const x
     | CFG_int_rand (a, b) -> V.rand a b
-    | CFG_int_unary (op, e) -> V.unary (eval_int_cfg env e) op
+    | CFG_int_unary (op, e) -> V.unary (eval_int env e) op
     | CFG_int_binary (op, e_1, e_2) ->
-      let eval_e1 = eval_int_cfg env e_1 in
-      let eval_e2 = eval_int_cfg env e_2 in
+      let eval_e1 = eval_int env e_1 in
+      let eval_e2 = eval_int env e_2 in
       V.binary eval_e1 eval_e2 op
 
   let assign t var expr =
     strict (fun env ->
-        let eval_expr = eval_int_cfg env expr in
+        let eval_expr = eval_int env expr in
         if V.is_bottom eval_expr then
           Bot
         else
@@ -168,7 +156,7 @@ module NonRelational(V : Value_domain.VALUE_DOMAIN) = (struct
   and g_tree = V.t * tree
 
   let rec annotated_tree env expr =
-    eval_int_cfg env expr, match expr with
+    eval_int env expr, match expr with
       CFG_int_unary (op, e) ->
       Unary (op, annotated_tree env e)
     | CFG_int_binary (op, e_1, e_2) ->
@@ -213,8 +201,8 @@ module NonRelational(V : Value_domain.VALUE_DOMAIN) = (struct
                  (Map.find var_2.var_name env) AST_LESS_EQUAL in
              Env (Map.add var_1.var_name v (Map.add var_2.var_name w env))
            | _ ->
-             let eval_e1 = eval_int_cfg env e_1 in
-             let eval_e2 = eval_int_cfg env e_2 in
+             let eval_e1 = eval_int env e_1 in
+             let eval_e2 = eval_int env e_2 in
              let r_1, r_2 = V.compare eval_e1 eval_e2 AST_LESS_EQUAL in
              let root_1 = V.meet eval_e1 r_1 in
              let root_2 = V.meet eval_e2 r_2 in
@@ -240,4 +228,4 @@ module NonRelational(V : Value_domain.VALUE_DOMAIN) = (struct
           V.print out v;
           fprintf out "; ") env;
       fprintf out "}"
-end(* : DOMAIN*))
+end: DOMAIN)
