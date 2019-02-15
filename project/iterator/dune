@@ -1,3 +1,4 @@
 (library
  (name iterator)
+ (libraries domains)
  (wrapped false))
