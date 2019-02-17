@@ -1,3 +1,3 @@
 (executable
  (name main)
- (libraries libs iterator frontend domains))
+ (libraries libs iterator frontend domains cmdliner))
