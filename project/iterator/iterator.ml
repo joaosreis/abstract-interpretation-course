@@ -25,8 +25,14 @@ module Make(Domain : Domain.DOMAIN) = struct
 
   let init cfg =
     let init_entry = cfg.cfg_init_entry in
-    List.fold_left (fun acc x -> eval acc x.arc_inst)
-      (Domain.init cfg.cfg_vars) init_entry.node_out
+    let iter_2 env worklist = match NodeSet.elements worklist with
+        [] -> env
+      | node :: t ->
+
+        print_int (List.length init_entry.node_out);
+
+        List.fold_left (fun acc x -> eval acc x.arc_inst)
+          (Domain.init cfg.cfg_vars) init_entry.node_out
 
   let process_cfg cfg =
     let global_d = init cfg in
