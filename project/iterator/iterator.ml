@@ -14,29 +14,35 @@ module Make(Domain : Domain.DOMAIN) = struct
       [] -> env
     | node :: t ->
       let worklist' = NodeSet.of_list t in
-      let env_d = try NodeMap.find node env with Not_found -> Domain.bottom in
+      let env_d = try NodeMap.find node env with _ -> Domain.bottom in
       let env_d' = List.fold_left (fun acc arc ->
-          Domain.join acc (eval acc arc.arc_inst)) env_d node.node_in in
+          let e = NodeMap.find arc.arc_src env in
+          Domain.join acc (eval e arc.arc_inst)) env_d node.node_in in
       if Domain.subset env_d env_d' && Domain.subset env_d' env_d then
         iter env worklist'
       else
         let env' = NodeMap.add node env_d' env in
-        iter env' worklist'
+        let succs =
+          List.map (fun a -> a.arc_dst) node.node_out |> NodeSet.of_list in
+        iter env' (NodeSet.union succs worklist')
 
   let init cfg =
     let init_entry = cfg.cfg_init_entry in
-    let iter_2 env worklist = match NodeSet.elements worklist with
+    let rec iter_2 env worklist = match NodeSet.elements worklist with
         [] -> env
       | node :: t ->
-
-        print_int (List.length init_entry.node_out);
-
-        List.fold_left (fun acc x -> eval acc x.arc_inst)
-          (Domain.init cfg.cfg_vars) init_entry.node_out
+        let worklist' = NodeSet.of_list t in
+        let env' = List.fold_left (fun acc arc ->
+            Domain.join acc (eval acc arc.arc_inst)) env node.node_in in
+        let succs =
+          List.map (fun a -> a.arc_dst) node.node_out |> NodeSet.of_list in
+        iter_2 env' (NodeSet.union succs worklist') in
+    iter_2 (Domain.init cfg.cfg_vars) (NodeSet.singleton init_entry)
 
   let process_cfg cfg =
     let global_d = init cfg in
-    let worklist = NodeSet.of_list cfg.cfg_nodes in
+    (* let main = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in *)
+    let worklist = NodeSet.of_list (cfg.cfg_nodes) in
     let env = NodeSet.fold (fun node acc ->
         NodeMap.add node global_d acc) worklist NodeMap.empty in
     iter env worklist

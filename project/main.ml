@@ -24,12 +24,15 @@ let doit filename =
   let cfg = Tree_to_cfg.prog prog in
   Printf.printf "%a" Cfg_printer.print_cfg cfg;
   Cfg_printer.output_dot "cfg.dot" cfg;
-  (* let d = Interval_iterator.process_cfg cfg in *)
-  (* let open Cfg in *)
+  let d = Interval_iterator.process_cfg cfg in
+  let open Cfg in
   (* let main = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in *)
   (* let env = NodeMap.find main.func_exit d in *)
-  let env = Interval_iterator.init cfg in
-  Interval_abstraction.print stdout env
+  (* let env = Interval_iterator.init cfg in *)
+  NodeMap.iter (fun node env ->
+      Printf.printf "%d: " node.node_id;
+      Interval_abstraction.print stdout env;
+      print_newline ()) d  
 
 (* parses arguments to get filename *)
 let main () =
