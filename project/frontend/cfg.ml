@@ -29,13 +29,13 @@ open Abstract_syntax_tree
    var structure.
    We use unique identifiers (integers) to distinguish between variables declared
    at different point with the same name.
- *)
+*)
 type var =
-    { var_id: int;       (* unique variable identifier *)
-      var_name: id;      (* original name, in the program *)
-      var_type: typ;     (* variable type *)
-      var_pos: extent;   (* position of the variable declaration *)
-    }
+  { var_id: int;       (* unique variable identifier *)
+    var_name: id;      (* original name, in the program *)
+    var_type: typ;     (* variable type *)
+    var_pos: extent;   (* position of the variable declaration *)
+  }
 
 
 
@@ -104,7 +104,7 @@ type inst =
   (* go to the destination node doing nothing *)
   (* the string argument is just for printing, it give some
      information on the original instruction that caused the skip
-   *)
+  *)
   | CFG_skip of string
 
   (* assignment *)
@@ -136,15 +136,15 @@ type inst =
  *)
 
 and func =
-    { func_id: int;          (* unique function identifier *)
-      func_name: string;     (* function name *)
-      func_pos: extent;      (* function position in the source *)
-      func_entry: node;      (* entry node *)
-      func_exit: node;       (* exit node *)
-      func_args: var list;   (* list of formal arguments *)
-      func_ret: var option;  (* variable used to store the return value *)
-      mutable func_calls: arc list; (* list of calls to the function *)
-    }
+  { func_id: int;          (* unique function identifier *)
+    func_name: string;     (* function name *)
+    func_pos: extent;      (* function position in the source *)
+    func_entry: node;      (* entry node *)
+    func_exit: node;       (* exit node *)
+    func_args: var list;   (* list of formal arguments *)
+    func_ret: var option;  (* variable used to store the return value *)
+    mutable func_calls: arc list; (* list of calls to the function *)
+  }
 
 
 
@@ -158,18 +158,18 @@ and func =
    statements and expressions can be split among many nodes.
  *)
 and node =
-    { node_id:  int;               (* unique identifier *)
-      node_pos: position;          (* position in the source *)
-      mutable node_out: arc list;  (* arcs with this node as source *)
-      mutable node_in: arc list;   (* arcs with this node as destination *)
-    }
+  { node_id:  int;               (* unique identifier *)
+    node_pos: position;          (* position in the source *)
+    mutable node_out: arc list;  (* arcs with this node as source *)
+    mutable node_in: arc list;   (* arcs with this node as destination *)
+  }
 
 and arc =
-    { arc_id:  int;    (* unique identifier *)
-      arc_src: node;   (* source node *)
-      arc_dst: node;   (* destination node *)
-      arc_inst: inst;  (* instruction *)
-    }
+  { arc_id:  int;    (* unique identifier *)
+    arc_src: node;   (* source node *)
+    arc_dst: node;   (* destination node *)
+    arc_inst: inst;  (* instruction *)
+  }
 
 
 
@@ -180,36 +180,36 @@ and arc =
 (* module parameter for Hashtbl, Set and Map functors *)
 
 module Node =
-  struct
-    type t = node
-    let compare v1 v2 = compare v1.node_id v2.node_id
-    let equal v1 v2 = v1.node_id = v2.node_id
-    let hash v = v.node_id
-  end
+struct
+  type t = node
+  let compare v1 v2 = compare v1.node_id v2.node_id
+  let equal v1 v2 = v1.node_id = v2.node_id
+  let hash v = v.node_id
+end
 
 module Arc =
-  struct
-    type t = arc
-    let compare v1 v2 = compare v1.arc_id v2.arc_id
-    let equal v1 v2 = v1.arc_id = v2.arc_id
-    let hash v = v.arc_id
-  end
+struct
+  type t = arc
+  let compare v1 v2 = compare v1.arc_id v2.arc_id
+  let equal v1 v2 = v1.arc_id = v2.arc_id
+  let hash v = v.arc_id
+end
 
 module Var =
-  struct
-    type t = var
-    let compare v1 v2 = compare v1.var_id v2.var_id
-    let equal v1 v2 = v1.var_id = v2.var_id
-    let hash v = v.var_id
-  end
+struct
+  type t = var
+  let compare v1 v2 = compare v1.var_id v2.var_id
+  let equal v1 v2 = v1.var_id = v2.var_id
+  let hash v = v.var_id
+end
 
 module Func =
-  struct
-    type t = func
-    let compare v1 v2 = compare v1.func_id v2.func_id
-    let equal v1 v2 = v1.func_id = v2.func_id
-    let hash v = v.func_id
-  end
+struct
+  type t = func
+  let compare v1 v2 = compare v1.func_id v2.func_id
+  let equal v1 v2 = v1.func_id = v2.func_id
+  let hash v = v.func_id
+end
 
 module NodeSet = Set.Make(Node)
 module NodeMap = Mapext.Make(Node)
@@ -234,11 +234,13 @@ module FuncHash = Hashtbl.Make(Func)
 
 
 type cfg =
-    { cfg_vars: var list;    (* list of all the variables *)
-      cfg_funcs: func list;  (* list of all the functions *)
-      cfg_nodes: node list;  (* list of all the nodes in the program *)
-      cfg_arcs: arc list;    (* list of all the arcs in the program *)
-      cfg_init_entry: node;  (* first node of code initializing global variables *)
-      cfg_init_exit: node;   (* last node of initialization code *)
-    }
+  { cfg_vars: var list;           (* list of all the variables *)
+    cfg_funcs: func list;         (* list of all the functions *)
+    cfg_nodes: node list;         (* list of all the nodes in the program *)
+    cfg_arcs: arc list;           (* list of all the arcs in the program *)
+    cfg_init_entry: node;         (* first node of code initializing global variables *)
+    cfg_init_exit: node;          (* last node of initialization code *)
+    cfg_loops_heads : node list;  (* list of all loop head nodes in the program *)
+    cfg_jumps_dst : node list;    (* list of all jump destination nodes in the program *)
+  }
 

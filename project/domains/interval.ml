@@ -188,11 +188,11 @@ let bwd_binary x y op r =
 
 let rec compare x y op =
   match op, x, y with
-    AST_GREATER_EQUAL, Itv (a, b), Itv (c, d) ->
+    AST_LESS_EQUAL, Itv (a, b), Itv (c, d) ->
     if a <=& d then
       Itv (a, bound_min b d), Itv (bound_max a c, d)
     else Bot, Bot
-  | AST_LESS_EQUAL, Itv _, Itv _ ->
+  | AST_GREATER_EQUAL, Itv _, Itv _ ->
     compare y x AST_GREATER_EQUAL
   | AST_GREATER, Itv (a, b), Itv (c, d) -> (* FIXME: not sure if it is correct *)
     if a <& d then

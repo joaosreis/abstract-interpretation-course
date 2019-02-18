@@ -139,6 +139,7 @@ let subset x y = match x, y with
 
 let widen a b = match a, b with
     x, Bot | Bot, x -> x
+  | Constant x, Constant y when Z.equal x y -> a
   | Top, _ | _, Top | Constant _, Constant _ -> Top
 
 let is_bottom = function Bot -> true | _ -> false
